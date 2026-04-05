@@ -47,7 +47,7 @@ export default function ProfilePage() {
             <div className="profile-avatar">{initials}</div>
             <div>
               <h2>{profile.firstName} {profile.lastName}</h2>
-              <p>{profile.emailId}</p>
+              <p>{profile.email}</p>
             </div>
           </div>
           <div className="profile-fields">
@@ -67,7 +67,7 @@ export default function ProfilePage() {
             </div>
             <div className="profile-field">
               <span className="profile-field-label">Email</span>
-              <span className="profile-field-value">{profile.emailId}</span>
+              <span className="profile-field-value">{profile.email}</span>
             </div>
             <div className="profile-field">
               <span className="profile-field-label">Mobile</span>

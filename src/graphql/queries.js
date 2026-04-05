@@ -30,7 +30,7 @@ export const GET_ME = gql`
       userId
       firstName
       lastName
-      emailId
+      email
       mobileNumber
     }
   }

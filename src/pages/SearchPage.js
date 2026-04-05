@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const TRIP_SERVICE_URL = 'http://localhost:8081';
+const TRIP_SERVICE_URL = 'http://localhost:8082';
+
+function toDateString(date) {
+  return date.toISOString().split('T')[0];
+}
+
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+const dayAfter = new Date();
+dayAfter.setDate(dayAfter.getDate() + 2);
 
 export default function SearchPage() {
-  const [form, setForm] = useState({ destination: '', startDate: '', endDate: '' });
+  const [form, setForm] = useState({ destination: '', startDate: toDateString(tomorrow), endDate: toDateString(dayAfter) });
   const [inventories, setInventories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -15,9 +24,19 @@ export default function SearchPage() {
 
   const handleSearch = async e => {
     e.preventDefault();
+    setError('');
+
+    if (!form.startDate || !form.endDate) {
+      setError('Please select both start and end dates.');
+      return;
+    }
+    if (new Date(form.endDate) <= new Date(form.startDate)) {
+      setError('End date must be after start date.');
+      return;
+    }
+
     setSearched(true);
     setLoading(true);
-    setError('');
     try {
       const res = await fetch(`${TRIP_SERVICE_URL}/api/trips/searchTrips`, {
         method: 'POST',
@@ -86,16 +105,17 @@ export default function SearchPage() {
         </form>
       </div>
 
+      {error && !searched && <div className="alert alert-error" style={{ maxWidth: 600, margin: '1rem auto 0' }}>{error}</div>}
+
       {searched && (
         <div style={{ marginTop: '2.5rem' }}>
-          <div className="section-header">
-            <h2>Available Inventories</h2>
-            {!loading && (
+          {!loading && (
+            <div className="section-header">
               <span style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
                 {inventories.length} result{inventories.length !== 1 ? 's' : ''}
               </span>
-            )}
-          </div>
+            </div>
+          )}
 
           {loading && (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
@@ -121,10 +141,9 @@ export default function SearchPage() {
                     <img src={inv.photoUrl} alt={inv.hotelName} />
                   </div>
                   <div className="inventory-card-body">
-                    <div className="inventory-card-hotel-id">ID: {inv.hotelId}</div>
-                    <div className="inventory-card-name">{inv.hotelName}</div>
+<div className="inventory-card-name">{inv.hotelName}</div>
                     <div className="inventory-card-price">
-                      ${inv.price.toFixed(2)} <span>/ night</span>
+                      ₹{inv.price.toFixed(2)} <span>/ night</span>
                     </div>
                   </div>
                   <div className="inventory-card-footer">

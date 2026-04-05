@@ -6,7 +6,7 @@ import { REGISTER_MUTATION } from '../graphql/queries';
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    firstName: '', lastName: '', emailId: '',
+    firstName: '', lastName: '', email: '',
     password: '', confirmPassword: '', mobileNumber: ''
   });
   const [error, setError]     = useState('');
@@ -88,8 +88,8 @@ export default function RegisterPage() {
 
           <div className="form-group">
             <label className="form-label">Email address</label>
-            <input className="form-input" type="email" name="emailId"
-              placeholder="sree@gmail.com" value={form.emailId} onChange={handleChange} required />
+            <input className="form-input" type="email" name="email"
+              placeholder="sree@gmail.com" value={form.email} onChange={handleChange} required />
           </div>
 
           <div className="form-group">

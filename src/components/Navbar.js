@@ -14,14 +14,11 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <NavLink to="/dashboard" className="navbar-brand">
+        <NavLink to="/search" className="navbar-brand">
          Travels<span>.</span>
         </NavLink>
         <div className="navbar-links">
-          <NavLink to="/dashboard" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            Dashboard
-          </NavLink>
-          <NavLink to="/profile" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+<NavLink to="/profile" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             Profile
           </NavLink>
           <button className="nav-link-logout" onClick={handleLogout}>
