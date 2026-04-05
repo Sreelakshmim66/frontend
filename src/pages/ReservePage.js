@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+const TRIP_SERVICE_URL = 'http://localhost:8082';
 
 export default function ReservePage() {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const inventory = state?.inventory;
   const searchParams = state?.searchParams;
@@ -39,7 +45,7 @@ export default function ReservePage() {
             <div className="inventory-card-hotel-id">Hotel ID: {inventory.hotelId}</div>
             <h2 className="reserve-hotel-name">{inventory.hotelName}</h2>
             <div className="reserve-hotel-price">
-              ${inventory.price.toFixed(2)} <span>/ night</span>
+              ₹{inventory.price.toFixed(2)} <span>/ night</span>
             </div>
           </div>
         </div>
@@ -76,11 +82,41 @@ export default function ReservePage() {
           )}
           <div className="profile-field">
             <span className="profile-field-label">Price per night</span>
-            <span className="profile-field-value">${inventory.price.toFixed(2)}</span>
+            <span className="profile-field-value">₹{inventory.price.toFixed(2)}</span>
           </div>
 
-          <button className="btn btn-primary btn-full" style={{ marginTop: '1.5rem' }}>
-            Confirm Reservation
+          {error && <div className="alert alert-error" style={{ marginTop: '1rem' }}>{error}</div>}
+
+          <button
+            className="btn btn-primary btn-full"
+            style={{ marginTop: '1.5rem' }}
+            disabled={loading}
+            onClick={async () => {
+              setError('');
+              setLoading(true);
+              try {
+                const res = await fetch(`${TRIP_SERVICE_URL}/api/trips/createTrip`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    hotelName: inventory.hotelName,
+                    hotelId: inventory.hotelId,
+                    userId: user?.userId,
+                    startDate: searchParams?.startDate || '',
+                    endDate: searchParams?.endDate || '',
+                  }),
+                });
+                if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+                const trip = await res.json();
+                navigate(`/checkout/${trip.tripId}`, { state: { inventory, searchParams } });
+              } catch (err) {
+                setError(err.message || 'Failed to create trip.');
+              } finally {
+                setLoading(false);
+              }
+            }}
+          >
+            {loading ? 'Processing...' : 'Confirm Reservation'}
           </button>
         </div>
       </div>
