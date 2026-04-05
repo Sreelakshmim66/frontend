@@ -84,6 +84,21 @@ export const CREATE_TRIP = gql`
   }
 `;
 
+// ── Search ─────────────────────────────────────────────────────────────────
+
+export const SEARCH_TRIPS = gql`
+  query SearchTrips($destination: String!, $startDate: String, $endDate: String) {
+    searchTrips(destination: $destination, startDate: $startDate, endDate: $endDate) {
+      id
+      name
+      destination
+      startDate
+      endDate
+      createdAt
+    }
+  }
+`;
+
 // ── Bookings ───────────────────────────────────────────────────────────────
 
 export const CREATE_BOOKING = gql`

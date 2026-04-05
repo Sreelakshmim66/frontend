@@ -15,7 +15,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-inner">
         <NavLink to="/dashboard" className="navbar-brand">
-          Sree Travels<span>.</span>
+         Travels<span>.</span>
         </NavLink>
         <div className="navbar-links">
           <NavLink to="/dashboard" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>

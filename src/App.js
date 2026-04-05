@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import TripDetailPage from './pages/TripDetailPage';
 import SearchPage from './pages/SearchPage';
+import ReservePage from './pages/ReservePage';
 import Navbar from './components/Navbar';
 
 function ProtectedRoute({ children }) {
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/profile"   element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/search"    element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
         <Route path="/trips/:tripId" element={<ProtectedRoute><TripDetailPage /></ProtectedRoute>} />
+        <Route path="/reserve"       element={<ProtectedRoute><ReservePage /></ProtectedRoute>} />
       </Routes>
     </>
   );

@@ -52,7 +52,7 @@ export default function RegisterPage() {
         <div className="auth-visual-bg" />
         <div className="auth-visual-grid" />
         <div className="auth-visual-content">
-          <div className="auth-visual-label">Join Sree Travels</div>
+          <div className="auth-visual-label">Join Travels</div>
           <h1 className="auth-visual-title">
             Plan smarter,<br />travel <span>further.</span>
           </h1>
