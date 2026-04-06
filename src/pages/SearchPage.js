@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const TRIP_SERVICE_URL = 'http://localhost:8082';
+import { useLazyQuery } from '@apollo/client';
+import { SEARCH_TRIPS } from '../graphql/queries';
 
 function toDateString(date) {
   return date.toISOString().split('T')[0];
@@ -14,15 +14,15 @@ dayAfter.setDate(dayAfter.getDate() + 2);
 
 export default function SearchPage() {
   const [form, setForm] = useState({ destination: '', startDate: toDateString(tomorrow), endDate: toDateString(dayAfter) });
-  const [inventories, setInventories] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
+  const [validationError, setError] = useState('');
   const navigate = useNavigate();
+  const [searchTrips, { data, loading, error }] = useLazyQuery(SEARCH_TRIPS);
+  const inventories = data?.searchTrips?.inventories || [];
 
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleSearch = async e => {
+  const handleSearch = e => {
     e.preventDefault();
     setError('');
 
@@ -36,25 +36,15 @@ export default function SearchPage() {
     }
 
     setSearched(true);
-    setLoading(true);
-    try {
-      const res = await fetch(`${TRIP_SERVICE_URL}/api/trips/searchTrips`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+    searchTrips({
+      variables: {
+        input: {
           destination: form.destination,
-          ...(form.startDate && { startDate: form.startDate }),
-          ...(form.endDate && { endDate: form.endDate }),
-        }),
-      });
-      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
-      const data = await res.json();
-      setInventories(data.inventories || []);
-    } catch (err) {
-      setError(err.message || 'Failed to fetch inventories.');
-    } finally {
-      setLoading(false);
-    }
+          startDate: form.startDate || null,
+          endDate: form.endDate || null,
+        },
+      },
+    });
   };
 
   return (
@@ -105,7 +95,7 @@ export default function SearchPage() {
         </form>
       </div>
 
-      {error && !searched && <div className="alert alert-error" style={{ maxWidth: 600, margin: '1rem auto 0' }}>{error}</div>}
+      {validationError && <div className="alert alert-error" style={{ maxWidth: 600, margin: '1rem auto 0' }}>{validationError}</div>}
 
       {searched && (
         <div style={{ marginTop: '2.5rem' }}>
@@ -123,7 +113,8 @@ export default function SearchPage() {
             </div>
           )}
 
-          {error && <div className="alert alert-error">{error}</div>}
+          {error && <div className="alert alert-error">{error.message}</div>}
+
 
           {!loading && !error && inventories.length === 0 && (
             <div className="empty-state">

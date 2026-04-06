@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { useQuery } from '@apollo/client';
-import { GET_ME } from '../graphql/queries';
+import { useQuery, useLazyQuery, useMutation } from '@apollo/client';
+import { GET_ME, GET_TRIP, CREATE_BOOKING } from '../graphql/queries';
 import { useAuth } from '../context/AuthContext';
-
-const TRIP_SERVICE_URL = 'http://localhost:8082';
-const USER_SERVICE_URL = 'http://localhost:8081';
 
 const PAYMENT_OPTIONS = [
   { id: 'upi', label: 'UPI' },
@@ -17,7 +14,7 @@ export default function CheckoutPage() {
   const { tripId } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
 
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [upiId, setUpiId] = useState('');
@@ -29,53 +26,34 @@ export default function CheckoutPage() {
   const inventory = state?.inventory;
   const searchParams = state?.searchParams;
 
-  const [tripData, setTripData] = useState(null);
-  const [tripLoading, setTripLoading] = useState(!inventory || !searchParams);
-  const [tripError, setTripError] = useState('');
+  const [fetchTrip, { data: tripQueryData, loading: tripLoading, error: tripQueryError }] = useLazyQuery(GET_TRIP);
 
   useEffect(() => {
     if (inventory && searchParams) return;
-    async function fetchTrip() {
-      try {
-        const res = await fetch(`${TRIP_SERVICE_URL}/api/trips/${tripId}`);
-        if (!res.ok) throw new Error(`Failed to fetch trip (${res.status})`);
-        setTripData(await res.json());
-      } catch (err) {
-        setTripError(err.message || 'Could not load trip details.');
-      } finally {
-        setTripLoading(false);
-      }
-    }
-    fetchTrip();
+    fetchTrip({ variables: { tripId } });
   }, [tripId, inventory, searchParams]);
 
-  const { data: profileData, loading: profileLoading } = useQuery(GET_ME, {
+  const tripData = tripQueryData?.trip;
+
+  const { data: profileData, loading: profileLoading, error: profileError } = useQuery(GET_ME, {
     variables: { userId: user?.userId },
     skip: !user?.userId,
   });
-  const graphqlProfile = profileData?.me;
 
-  const [restProfile, setRestProfile] = useState(null);
+  const [fetchProfileFallback, { data: profileFallbackData, loading: profileFallbackLoading }] = useLazyQuery(GET_ME);
 
   useEffect(() => {
-    if (profileLoading || graphqlProfile || !user?.userId) return;
-    async function fetchProfile() {
-      try {
-        const res = await fetch(`${USER_SERVICE_URL}/api/users/${user.userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) return;
-        setRestProfile(await res.json());
-      } catch {
-        // silently fail — profile fields will just be empty
-      }
+    if (profileLoading || profileFallbackLoading) return;
+    if (!profileData?.me && user?.userId) {
+      fetchProfileFallback({ variables: { userId: user.userId } });
     }
-    fetchProfile();
-  }, [profileLoading, graphqlProfile, user?.userId, token]);
+  }, [profileLoading, profileData, user?.userId]);
 
-  const profile = graphqlProfile || restProfile;
+  const profile = profileData?.me || profileFallbackData?.me;
 
-  if (tripLoading || profileLoading) {
+  const [createBooking] = useMutation(CREATE_BOOKING);
+
+  if (tripLoading || profileLoading || profileFallbackLoading) {
     return (
       <div className="page" style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
         <div className="spinner" />
@@ -83,10 +61,10 @@ export default function CheckoutPage() {
     );
   }
 
-  if (tripError) {
+  if (tripQueryError) {
     return (
       <div className="page">
-        <div className="alert alert-error">{tripError}</div>
+        <div className="alert alert-error">{tripQueryError.message}</div>
         <button className="btn btn-ghost btn-sm" style={{ marginTop: '1rem' }} onClick={() => navigate('/search')}>
           Back to search
         </button>
@@ -295,30 +273,15 @@ export default function CheckoutPage() {
                 setBookingError('');
                 setBookingLoading(true);
                 try {
-                  const res = await fetch('http://localhost:8083/api/bookings/completeBooking', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      tripId,
-                      userId: user?.userId,
-                      userDetails: {
-                        firstName: profile?.firstName,
-                        lastName: profile?.lastName,
-                        email: profile?.email,
-                        mobileNumber: profile?.mobileNumber,
+                  const { data } = await createBooking({
+                    variables: {
+                      input: {
+                        tripId,
+                        userId: user?.userId,
                       },
-                      tripDetails: {
-                        hotelName: inventory?.hotelName || tripData?.name,
-                        startDate: searchParams?.startDate || tripData?.startDate,
-                        endDate: searchParams?.endDate || tripData?.endDate,
-                        price: inventory?.price,
-                        paymentMethod,
-                      },
-                    }),
+                    },
                   });
-                  if (!res.ok) throw new Error(`Booking failed (${res.status})`);
-                  const booking = await res.json();
-                  navigate('/confirmation', { state: { booking, profile } });
+                  navigate('/confirmation', { state: { booking: data.createBooking, profile } });
                 } catch (err) {
                   setBookingError(err.message || 'Failed to complete booking.');
                 } finally {

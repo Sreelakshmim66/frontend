@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useMutation } from '@apollo/client';
 import { useAuth } from '../context/AuthContext';
-
-const TRIP_SERVICE_URL = 'http://localhost:8082';
+import { CREATE_TRIP } from '../graphql/queries';
 
 export default function ReservePage() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [createTrip, { loading }] = useMutation(CREATE_TRIP);
 
   const inventory = state?.inventory;
   const searchParams = state?.searchParams;
@@ -93,26 +93,21 @@ export default function ReservePage() {
             disabled={loading}
             onClick={async () => {
               setError('');
-              setLoading(true);
               try {
-                const res = await fetch(`${TRIP_SERVICE_URL}/api/trips/createTrip`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    hotelName: inventory.hotelName,
-                    hotelId: inventory.hotelId,
-                    userId: user?.userId,
-                    startDate: searchParams?.startDate || '',
-                    endDate: searchParams?.endDate || '',
-                  }),
+                const { data } = await createTrip({
+                  variables: {
+                    input: {
+                      name: inventory.hotelName,
+                      destination: inventory.hotelId,
+                      userId: user?.userId,
+                      startDate: searchParams?.startDate || '',
+                      endDate: searchParams?.endDate || '',
+                    },
+                  },
                 });
-                if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
-                const trip = await res.json();
-                navigate(`/checkout/${trip.tripId}`, { state: { inventory, searchParams } });
+                navigate(`/checkout/${data.createTrip.tripId}`, { state: { inventory, searchParams } });
               } catch (err) {
                 setError(err.message || 'Failed to create trip.');
-              } finally {
-                setLoading(false);
               }
             }}
           >

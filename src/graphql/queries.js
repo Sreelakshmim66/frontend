@@ -41,7 +41,7 @@ export const GET_ME = gql`
 export const GET_MY_TRIPS = gql`
   query GetMyTrips($userId: ID!) {
     myTrips(userId: $userId) {
-      id
+      tripId
       name
       destination
       startDate
@@ -54,16 +54,16 @@ export const GET_MY_TRIPS = gql`
 export const GET_TRIP = gql`
   query GetTrip($tripId: ID!) {
     trip(tripId: $tripId) {
-      id
+      tripId
       name
       destination
       startDate
       endDate
       createdAt
       bookings {
-        id
-        type
-        details
+        bookingId
+        tripId
+        userId
         status
         createdAt
       }
@@ -74,7 +74,7 @@ export const GET_TRIP = gql`
 export const CREATE_TRIP = gql`
   mutation CreateTrip($input: CreateTripInput!) {
     createTrip(input: $input) {
-      id
+      tripId
       name
       destination
       startDate
@@ -87,14 +87,14 @@ export const CREATE_TRIP = gql`
 // ── Search ─────────────────────────────────────────────────────────────────
 
 export const SEARCH_TRIPS = gql`
-  query SearchTrips($destination: String!, $startDate: String, $endDate: String) {
-    searchTrips(destination: $destination, startDate: $startDate, endDate: $endDate) {
-      id
-      name
-      destination
-      startDate
-      endDate
-      createdAt
+  query SearchTrips($input: SearchTripsInput!) {
+    searchTrips(input: $input) {
+      inventories {
+        hotelId
+        hotelName
+        price
+        photoUrl
+      }
     }
   }
 `;
@@ -104,10 +104,9 @@ export const SEARCH_TRIPS = gql`
 export const CREATE_BOOKING = gql`
   mutation CreateBooking($input: CreateBookingInput!) {
     createBooking(input: $input) {
-      id
+      bookingId
       tripId
-      type
-      details
+      userId
       status
       createdAt
     }
@@ -117,10 +116,9 @@ export const CREATE_BOOKING = gql`
 export const GET_BOOKINGS_BY_USER = gql`
   query GetBookingsByUser($userId: ID!) {
     bookingsByUser(userId: $userId) {
-      id
+      bookingId
       tripId
-      type
-      details
+      userId
       status
       createdAt
     }
