@@ -48,13 +48,6 @@ export default function ConfirmationPage() {
           </div>
         </div>
 
-        <div style={{ background: 'var(--accent-subtle, #eef6ff)', borderRadius: 'var(--radius-md)', padding: '1rem 1.5rem', marginBottom: '2rem', textAlign: 'left' }}>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--muted)' }}>
-            📧 A confirmation email has been sent to <strong>{profile?.email || booking.userDetails?.email}</strong>.
-            Please check your inbox for the booking details.
-          </p>
-        </div>
-
         <button className="btn btn-primary" onClick={() => navigate('/search')}>
           Book Another Trip
         </button>

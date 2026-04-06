@@ -20,6 +20,7 @@ export default function LoginPage() {
     try {
       const { data } = await loginMutation({ variables: { input: form } });
       const result = data?.login;
+        console.log('login result:', result);
       if (result?.success && result?.token) {
         login(result.token, result.userId);
         navigate('/search');
